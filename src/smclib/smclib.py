@@ -7,6 +7,10 @@ Author:         Yaroslav Kovalev
 import numpy as np
 import matplotlib.pyplot as plt
 
+class MCSim:
+    # tbd --> class MCSimulation will be obsolete
+    pass
+
 class __parameter__:
     def __init__(self,groundValue:float,lowerTol:float,upperTol:float):
         """Add parameter to Simulation. The execution order is crucial!
