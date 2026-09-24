@@ -1,0 +1,11 @@
+Next steps for development
+--------------------------
+
+create new Monte-Carlo object from scratch.
+things to consider:
+- UML
+- use of multiple distributions e.g. uniform, normal, binomial,...
+- random numbers can be generated async --> no for loop
+- visualisation (option for german and english)
+- own PDF and CFD objects
+- add interfaces for optimisation/minimisation and sensetivity analysis
