@@ -4,6 +4,7 @@ Next steps for development
 create new Monte-Carlo object from scratch.
 things to consider:
 - UML
+- multiple functions with same parameter set (params --> fcn1, fcn2,... --> res1, res2, ...)
 - use of multiple distributions e.g. uniform, normal, binomial,...
 - random numbers can be generated async --> no for loop
 - visualisation (option for german and english)
