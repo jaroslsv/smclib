@@ -11,6 +11,15 @@ class MCSim:
     # tbd --> class MCSimulation will be obsolete
     pass
 
+def randomUniformPointsInCircle(radius:float, N:int, rng:np.random.Generator)->np.ndarray:
+    angles = rng.uniform(0, 2*np.pi, N)
+    radii = rng.triangular(left=0, mode=radius, right=radius, size=N)   
+
+    return np.array([
+        radii * np.cos(angles),
+        radii * np.sin(angles)
+    ])
+
 class __parameter__:
     def __init__(self,groundValue:float,lowerTol:float,upperTol:float):
         """Add parameter to Simulation. The execution order is crucial!
