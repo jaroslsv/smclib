@@ -11,14 +11,15 @@ class MCSim:
     # tbd --> class MCSimulation will be obsolete
     pass
 
-def randomUniformPointsInCircle(radius:float, N:int, rng:np.random.Generator)->np.ndarray:
-    angles = rng.uniform(0, 2*np.pi, N)
-    radii = rng.triangular(left=0, mode=radius, right=radius, size=N)   
-
-    return np.array([
-        radii * np.cos(angles),
-        radii * np.sin(angles)
-    ])
+def uniform_pts_in_circle(d:float,N:int,rng:np.random.RandomState):
+    if d==0:
+        return np.zeros((N, 2))
+        
+    r = rng.triangular(left=0, mode=d/2, right=d/2,size=N)
+    angles = rng.uniform(0,2*np.pi,N)
+    x = r*np.cos(angles)
+    y = r*np.sin(angles)
+    return np.array([x,y]).transpose()
 
 class __parameter__:
     def __init__(self,groundValue:float,lowerTol:float,upperTol:float):
