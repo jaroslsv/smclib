@@ -7,9 +7,35 @@ Author:         Yaroslav Kovalev
 import numpy as np
 import matplotlib.pyplot as plt
 
+
+class Distribution1D:
+    def __init__(self,shots:int):
+        self.shots = shots
+        self.distribution = None
+
+    def distribute(self)->np.ndarray:
+        pass
+    
+class uniform(Distribution1D):
+    def __init__(self,lower_limit:float, upper_limit:float, shots:int):
+        super().__init__(shots=shots)
+        self.lower_limit = lower_limit
+        self.upper_limit = upper_limit
+
+
 class MCSim:
     # tbd --> class MCSimulation will be obsolete
+
+    def __init__(self,fcns:list, shots:int):
+        self.shots = shots
+        self.functions = fcns
+        self.distributions = []
+        self.results = []
+        
+
     pass
+
+
 
 def uniform_pts_in_circle(d:float,N:int,rng:np.random.RandomState):
     if d==0:
