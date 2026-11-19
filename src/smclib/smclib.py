@@ -7,36 +7,6 @@ Author:         Yaroslav Kovalev
 import numpy as np
 import matplotlib.pyplot as plt
 
-
-class Distribution1D:
-    def __init__(self,shots:int):
-        self.shots = shots
-        self.distribution = None
-
-    def distribute(self)->np.ndarray:
-        pass
-    
-class uniform(Distribution1D):
-    def __init__(self,lower_limit:float, upper_limit:float, shots:int):
-        super().__init__(shots=shots)
-        self.lower_limit = lower_limit
-        self.upper_limit = upper_limit
-
-
-class MCSim:
-    # tbd --> class MCSimulation will be obsolete
-
-    def __init__(self,fcns:list, shots:int):
-        self.shots = shots
-        self.functions = fcns
-        self.distributions = []
-        self.results = []
-        
-
-    pass
-
-
-
 def uniform_pts_in_circle(d:float,N:int,rng:np.random.RandomState):
     if d==0:
         return np.zeros((N, 2))
@@ -46,6 +16,80 @@ def uniform_pts_in_circle(d:float,N:int,rng:np.random.RandomState):
     x = r*np.cos(angles)
     y = r*np.sin(angles)
     return np.array([x,y]).transpose()
+
+
+class Distribution:
+    def __init__(self,rng:np.random.RandomState):
+        self.distribution = None
+        self.rng = rng
+
+    def distribute(self,shots:int)->np.ndarray:
+        # left empty on purpose --> after inheritance
+        pass
+
+class uniform(Distribution):
+    def __init__(self,lower_limit:float, upper_limit:float, rng:np.random.RandomState):
+        super().__init__(rng=rng)
+        if lower_limit > upper_limit:
+            raise Exception("lower_limit must be smaller than upper_limit")
+        self.lower_limit = lower_limit
+        self.upper_limit = upper_limit
+
+    def distribute(self,shots:int)->None:
+        self.distribution = self.rng.uniform(self.lower_limit,self.upper_limit,shots)
+
+class normal(Distribution):
+    def __init__(self, mean:float, sigma:float, rng:np.random.RandomState):
+        super().__init__(rng=rng)
+        self.mean = mean
+        self.sigma = sigma
+
+    def distribute(self,shots:int)->None:
+        self.distribution = self.rng.normal(self.mean, self.sigma, shots)
+
+class uniform_points_in_circle(Distribution):
+    def __init__(self, diameter:float, rng:np.random.RandomState, zero=(0.0,0.0)):
+        super().__init__(rng)
+        self.diameter = diameter
+        self.x, self.y = None, None
+        self.zero = zero
+
+    def distribute(self, shots:int)->None:
+        self.distribution = uniform_pts_in_circle(self.diameter,shots,self.rng).transpose()
+        self.distribution[0,:] += self.zero[0]
+        self.distribution[1,:] += self.zero[1]
+
+
+class MCSim:
+    def __init__(self,fcns:list, shots:int):
+        self.shots = shots
+        self.functions = fcns
+        self.distributions = [] # inputs
+        self.distributed_values = [] # outputs
+        self.results = [] # returned values from functions
+
+    def addDistribution(self, d:Distribution):
+        self.distributions.append(d)
+
+    def simulate(self):
+        self.distributed_values.clear()
+        self.results.clear()
+
+        # distribute and store unpacked values
+        for dist in self.distributions:
+            dist.distribute(self.shots)
+
+            if len(np.shape(dist.distribution)) > 1:
+                for i in range(len(np.shape(dist.distribution))):
+                    self.distributed_values.append(dist.distribution[i])
+            else:
+                self.distributed_values.append(dist.distribution)
+
+        # apply values to function
+        for fcn in self.functions:
+            self.results.append(fcn(*self.distributed_values))
+
+        
 
 class __parameter__:
     def __init__(self,groundValue:float,lowerTol:float,upperTol:float):
