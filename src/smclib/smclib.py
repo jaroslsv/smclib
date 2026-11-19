@@ -6,6 +6,7 @@ Author:         Yaroslav Kovalev
 
 import numpy as np
 import matplotlib.pyplot as plt
+from time import thread_time_ns
 
 def uniform_pts_in_circle(d:float,N:int,rng:np.random.RandomState):
     if d==0:
@@ -18,17 +19,18 @@ def uniform_pts_in_circle(d:float,N:int,rng:np.random.RandomState):
     return np.array([x,y]).transpose()
 
 class Distribution:
-    def __init__(self,rng:np.random.RandomState):
+    def __init__(self,rng:np.random.RandomState,name:str):
         self.distribution = None
         self.rng = rng
+        self.name = name
 
     def distribute(self,shots:int)->np.ndarray:
         # left empty on purpose --> after inheritance
         raise NotImplementedError("Subclasses must implement this method")
 
 class dist_uniform(Distribution):
-    def __init__(self,lower_limit:float, upper_limit:float, rng:np.random.RandomState):
-        super().__init__(rng=rng)
+    def __init__(self,lower_limit:float, upper_limit:float, rng:np.random.RandomState, name:str=None):
+        super().__init__(rng=rng,name=name)
         if lower_limit > upper_limit:
             raise Exception("lower_limit must be smaller than upper_limit")
         self.lower_limit = lower_limit
@@ -38,8 +40,8 @@ class dist_uniform(Distribution):
         self.distribution = self.rng.uniform(self.lower_limit,self.upper_limit,shots)
 
 class dist_normal(Distribution):
-    def __init__(self, mean:float, sigma:float, rng:np.random.RandomState):
-        super().__init__(rng=rng)
+    def __init__(self, mean:float, sigma:float, rng:np.random.RandomState, name:str=None):
+        super().__init__(rng=rng,name=name)
         self.mean = mean
         self.sigma = sigma
 
@@ -47,8 +49,8 @@ class dist_normal(Distribution):
         self.distribution = self.rng.normal(self.mean, self.sigma, shots)
 
 class dist_uniform_points_in_circle(Distribution):
-    def __init__(self, diameter:float, rng:np.random.RandomState, zero=(0.0,0.0)):
-        super().__init__(rng)
+    def __init__(self, diameter:float, rng:np.random.RandomState, zero=(0.0,0.0), name:str=None):
+        super().__init__(rng,name=name)
         self.diameter = diameter
         self.x, self.y = None, None
         self.zero = zero
@@ -58,21 +60,25 @@ class dist_uniform_points_in_circle(Distribution):
         self.distribution[0,:] += self.zero[0]
         self.distribution[1,:] += self.zero[1]
 
-
 class MCSim:
     def __init__(self,fcns:list, shots:int):
         self.shots = shots
-        self.functions = fcns
+        self.functions = fcns # fcn(a_1, a_2, ... , a_n)
+
         self.distributions = [] # inputs
         self.distributed_values = [] # outputs
         self.results = [] # returned values from functions
+
+        self.stats_PDF = []
+        self.stats_CDF = []
+        self.stats_bin_edges = []
 
     def addDistribution(self, d:Distribution):
         self.distributions.append(d)
 
     def simulate(self):
         self.distributed_values.clear()
-        self.results.clear()
+        self.results.clear()        
 
         # distribute and store unpacked values
         for dist in self.distributions:
@@ -88,7 +94,45 @@ class MCSim:
         for fcn in self.functions:
             self.results.append(fcn(*self.distributed_values))
 
-        
+    @staticmethod
+    def getPDF_CDF(data:np.ndarray, bins:int=100):        
+        pdf, bin_edges = np.histogram(data,bins=bins)
+        cdf = np.cumsum(pdf)
+        cdf = cdf / np.max(cdf)
+        return bin_edges, pdf, cdf
+
+    def computePDF_CDF(self,bins=100):
+        self.stats_bin_edges.clear()
+        self.stats_PDF.clear()
+        self.stats_CDF.clear()
+
+        for entry in self.results:
+            print(len(entry.shape))
+            if len(entry.shape) == 1:
+                b,p,c = self.getPDF_CDF(entry,bins=bins)
+                self.stats_bin_edges.append(b)
+                self.stats_PDF.append(p)
+                self.stats_CDF.append(c)
+            elif len(entry.shape) == 2:
+                tmp_b = []
+                tmp_p = []
+                tmp_c = []
+                for i in range(len(entry)):
+                    b,p,c = self.getPDF_CDF(entry[i],bins=bins)
+                    tmp_b.append(b)
+                    tmp_p.append(p)
+                    tmp_c.append(c)                    
+                self.stats_bin_edges.append(np.array(tmp_b))
+                self.stats_PDF.append(np.array(tmp_p))
+                self.stats_CDF.append(np.array(tmp_c))
+            else:
+                raise TypeError("Dimensions must be eiter '(n,)' or '(n,m)'")
+
+    def plotPDF_CDF(self, indices=[]):
+        plt.figure(thread_time_ns())
+        plt.subplot(2,1,1)
+
+
 
 class __parameter__:
     def __init__(self,groundValue:float,lowerTol:float,upperTol:float):
