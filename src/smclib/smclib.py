@@ -17,7 +17,6 @@ def uniform_pts_in_circle(d:float,N:int,rng:np.random.RandomState):
     y = r*np.sin(angles)
     return np.array([x,y]).transpose()
 
-
 class Distribution:
     def __init__(self,rng:np.random.RandomState):
         self.distribution = None
@@ -25,9 +24,9 @@ class Distribution:
 
     def distribute(self,shots:int)->np.ndarray:
         # left empty on purpose --> after inheritance
-        pass
+        raise NotImplementedError("Subclasses must implement this method")
 
-class uniform(Distribution):
+class dist_uniform(Distribution):
     def __init__(self,lower_limit:float, upper_limit:float, rng:np.random.RandomState):
         super().__init__(rng=rng)
         if lower_limit > upper_limit:
@@ -38,7 +37,7 @@ class uniform(Distribution):
     def distribute(self,shots:int)->None:
         self.distribution = self.rng.uniform(self.lower_limit,self.upper_limit,shots)
 
-class normal(Distribution):
+class dist_normal(Distribution):
     def __init__(self, mean:float, sigma:float, rng:np.random.RandomState):
         super().__init__(rng=rng)
         self.mean = mean
@@ -47,7 +46,7 @@ class normal(Distribution):
     def distribute(self,shots:int)->None:
         self.distribution = self.rng.normal(self.mean, self.sigma, shots)
 
-class uniform_points_in_circle(Distribution):
+class dist_uniform_points_in_circle(Distribution):
     def __init__(self, diameter:float, rng:np.random.RandomState, zero=(0.0,0.0)):
         super().__init__(rng)
         self.diameter = diameter
